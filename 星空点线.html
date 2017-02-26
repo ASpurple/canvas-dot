@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>星空点线</title>
+	<style>	
+		html, body { 
+			background: #000;
+			margin: 0; 
+			padding:0;
+		}
+		canvas {
+			width: 100%;
+			height: 100%;
+			position: absolute;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+	<script>
+		//canvas 初始化
+			let canvas = document.querySelector("#canvas");
+			canvas.width = innerWidth;
+			canvas.height = innerHeight;
+		// ctx 对象
+			ctx = canvas.getContext("2d");		
+			ctx.lineWidth = .5;
+
+		//dit 对象
+			let dots = {
+				num:200,
+				distance:100,
+				d_radius:60,
+				arr:[]
+			}
+			let center = {
+		    	x: canvas.width / 2,
+		    	y: canvas.height / 2
+		  	};
+
+		// 颜色
+			class Rgba{
+				constructor(){
+					this.r = this.colorValue();
+					this.g = this.colorValue();
+					this.b = this.colorValue();
+					this.a = .8;
+					this.rgba = `rgba(${this.r},${this.g},${this.b},${this.a})`
+				}
+				colorValue(min) {
+			    	return Math.floor(Math.random() * 256);
+			  	}
+			}
+		// 小点
+			class Dot{
+				constructor(){
+				    this.x = Math.random() * canvas.width;
+				    this.y = Math.random() * canvas.height;
+
+				    this.vx = -.5 + Math.random();
+				    this.vy = -.5 + Math.random();
+
+				    this.radius = Math.random() * 2;
+
+				    this.color = new Rgba();
+				}
+				draw(){
+			      ctx.beginPath();
+			      ctx.fillStyle = this.color.rgba;
+			      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+			      ctx.fill();
+			    }
+			}
+		// move
+			function moveDots() {
+			    for(let i = 0; i < dots.num; i++){
+
+				    let dot = dots.arr[i];
+
+				    if(dot.y < 0 || dot.y > canvas.height){
+				        dot.vx = dot.vx;
+				        dot.vy = - dot.vy;
+				    }
+				    else if(dot.x < 0 || dot.x > canvas.width){
+				        dot.vx = - dot.vx;
+				        dot.vy = dot.vy;
+				    }
+				    dot.x += dot.vx;
+				    dot.y += dot.vy;
+			    }
+			}
+		//生成小点
+			function createDots(){
+			    for(i = 0; i < dots.num; i++){
+			      dots.arr.push(new Dot());
+			    }
+			}
+			function drawDots() {
+			    for(let i = 0; i < dots.num; i++){
+			      let dot = dots.arr[i];
+			      dot.draw();
+			    }
+			}
+
+		// 连接小点
+			function connectDots(){
+				for(let i=0;i<dots.num;i++){
+					for(let j = 0;j<dots.num;j++){
+						let i_dot = dots.arr[i];
+						let j_dot = dots.arr[j];
+						if(i_dot.x-j_dot.x<dots.distance && i_dot.y-j_dot.y<dots.distance && i_dot.x-j_dot.x>-dots.distance && i_dot.y-j_dot.y>-dots.distance){
+							if(i_dot.x-center.x<dots.d_radius && i_dot.y-center.y<dots.d_radius && i_dot.x-center.x>-dots.d_radius && i_dot.y-center.y>-dots.d_radius){
+					            ctx.beginPath();
+					            ctx.strokeStyle = mixColor(i_dot,j_dot);
+					            ctx.moveTo(i_dot.x, i_dot.y);
+					            ctx.lineTo(j_dot.x, j_dot.y);
+					            ctx.stroke();
+					            ctx.closePath();
+							}
+						}
+					}
+				}			
+			}
+		//混合颜色
+			function mixColor(dot1,dot2){
+				let color1 = dot1.color,
+					color2 = dot2.color;
+				let r = mixRgb(color1.r, color2.r),
+					g = mixRgb(color1.g, color2.g),
+					b = mixRgb(color1.b, color2.b);
+				return `rgba(${r},${g},${b},0.5)`
+			}
+			function mixRgb(c1,c2){
+				return (c1+c2)/2;
+			}
+		// 鼠标事件
+			  document.addEventListener("mousemove",function(e){
+			    center.x = e.pageX;
+			    center.y = e.pageY;
+			  })
+			  document.addEventListener("mouseleave",function(e){
+			    center.x = canvas.width / 2;
+			    center.y = canvas.height / 2;
+			  })
+		//动画
+			function animateDots() {
+			    ctx.clearRect(0, 0, canvas.width, canvas.height);
+			    moveDots();
+			    connectDots();
+			    drawDots();
+			    requestAnimationFrame(animateDots);	
+			}
+		createDots();
+		drawDots();
+	  	animateDots();
+	</script>
+</body>
+</html>
